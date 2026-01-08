@@ -5,12 +5,13 @@ import { computed } from 'vue';
 import Draggable from 'vuedraggable';
 import ColoredCard from '../components/ColoredCard.vue';
 import ToolCard from '../components/ToolCard.vue';
+import HeroSection from '../components/HeroSection.vue';
 import { useToolStore } from '@/tools/tools.store';
 import { config } from '@/config';
 
 const toolStore = useToolStore();
 
-useHead({ title: 'IT Tools - Handy online tools for developers' });
+useHead({ title: 'ToolsApp Lab | The Ultimate Developer Toolbox' });
 const { t } = useI18n();
 
 const favoriteTools = computed(() => toolStore.favoriteTools);
@@ -22,6 +23,10 @@ function onUpdateFavoriteTools() {
 </script>
 
 <template>
+  <!-- Hero Section -->
+  <HeroSection />
+
+  <!-- Tools Grid -->
   <div class="pt-50px">
     <div class="grid-wrapper">
       <div class="grid grid-cols-1 gap-12px lg:grid-cols-3 md:grid-cols-3 sm:grid-cols-2 xl:grid-cols-4">

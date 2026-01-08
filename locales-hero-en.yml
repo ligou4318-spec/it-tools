@@ -1,0 +1,19 @@
+# Hero Section Translations
+hero:
+  badge: 'New AI Features Added'
+  title: 'All Developer Tools in <strong>One Place</strong>'
+  subtitle: 'No need to bookmark separate tools. Get everything you need in one powerful, free toolbox.'
+  searchPlaceholder: 'Search for tools (e.g., "JSON", "Base64", "Cron")...'
+  noResults: 'No tools found'
+  exploreBtn: 'Explore Tools'
+  githubBtn: 'Star on GitHub'
+  starCount: '{count} GitHub stars'
+  featuredIn: 'Featured in'
+
+# AI Explain Button Translations
+aiExplain:
+  button: '✨ AI Explain'
+  plainEnglish: 'In Plain English'
+  businessScenarios: 'Business Use Cases'
+  codeExample: 'Code Example'
+  timezoneTip: 'Timezone Tip'
