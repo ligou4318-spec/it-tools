@@ -38,7 +38,7 @@ export const { themes: appThemes, useTheme: useAppTheme } = defineThemes({
     },
   },
   dark: {
-    background: '#1e1e1e',
+    background: '#0B0E14',
     text: {
       baseColor: '#ffffffd1',
       mutedColor: '#ffffff80',

@@ -57,14 +57,15 @@ export default defineConfig({
       registerType: 'autoUpdate',
       strategies: 'generateSW',
       manifest: {
-        name: 'IT Tools',
-        description: 'Aggregated set of useful tools for developers.',
+        name: 'ToolsApp Lab',
+        shortName: 'ToolsApp Lab',
+        description: 'The Pro Developer Playground - 100+ privacy-focused tools running locally in your browser.',
         display: 'standalone',
-        lang: 'fr-FR',
+        lang: 'en-US',
         start_url: `${baseUrl}?utm_source=pwa&utm_medium=pwa`,
         orientation: 'any',
-        theme_color: '#18a058',
-        background_color: '#f1f5f9',
+        theme_color: '#0B0E14',
+        background_color: '#0B0E14',
         icons: [
           {
             src: '/favicon-16x16.png',
@@ -112,5 +113,47 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log'],
+      },
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks for better caching
+          'vue-vendor': ['vue', 'vue-router', 'pinia'],
+          'naive-ui': ['naive-ui'],
+          'editor': ['monaco-editor'],
+          'utils': ['lodash', 'date-fns', 'colord'],
+        },
+        // Optimize chunk file names
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
+      },
+    },
+    // Optimize chunk size
+    chunkSizeWarningLimit: 1000,
+    // Enable source code transformation
+    sourcemap: false,
+  },
+  // Optimize dependencies pre-bundling
+  optimizeDeps: {
+    include: [
+      'vue',
+      'vue-router',
+      'pinia',
+      'naive-ui',
+      '@vueuse/core',
+    ],
+  },
+  // Server configuration
+  server: {
+    port: 5173,
+    host: true,
   },
 });

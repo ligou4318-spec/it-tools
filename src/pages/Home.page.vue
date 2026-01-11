@@ -11,7 +11,7 @@ import { config } from '@/config';
 
 const toolStore = useToolStore();
 
-useHead({ title: 'ToolsApp Lab | The Ultimate Developer Toolbox' });
+useHead({ title: 'ToolsApp Lab | The Pro Developer Playground' });
 const { t } = useI18n();
 
 const favoriteTools = computed(() => toolStore.favoriteTools);

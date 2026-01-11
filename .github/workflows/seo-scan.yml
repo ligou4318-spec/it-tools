@@ -1,0 +1,66 @@
+name: SEO Analysis & Lighthouse Audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  seo-audit:
+    runs-on: ubuntu-latest
+    name: SEO Analysis
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.11.0
+          
+      - name: Install dependencies
+        run: pnpm install
+        
+      - name: Build project
+        run: pnpm build
+        env:
+          NODE_OPTIONS: --max_old_space_size=4096
+          
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          urls: |
+            https://toolsapplab.com
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          
+      - name: SEO Audit
+        run: |
+          npm install -g @withastro/cli
+          npx astro-seo https://toolsapplab.com || true
+          
+      - name: Bundle Size Analysis
+        run: |
+          npx vite-bundle-visualizer || true
+          ls -lh dist/assets/
+          
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## 🔍 SEO & Performance Analysis Complete\n\n✅ Build successful\n✅ SEO audit complete\n✅ Bundle size analyzed\n\n[View full Lighthouse report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+            })

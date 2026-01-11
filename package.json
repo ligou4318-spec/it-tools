@@ -6,6 +6,7 @@
   "description": "100+ privacy-focused developer tools running locally in your browser. JSON formatter, Base64 encoder, JWT decoder, regex tester, cron generator, SQL formatter, and more. No signup. No ads. No tracking. Open source (GPL-3.0).",
   "author": "Corentin Th <corentin.thomasset74+it-tools@gmail.com> (https://corentin.tech)",
   "license": "GNU GPLv3",
+"engines": {    "node": ">=20.0.0"  },
   "repository": {
     "type": "git",
     "url": "https://github.com/CorentinTh/it-tools"
