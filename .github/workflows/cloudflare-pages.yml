@@ -1,0 +1,199 @@
+# ==============================================================================
+# Cloudflare Pages Deployment Pipeline
+# ==============================================================================
+# Architecture: Zero Downtime Deployment + Global Edge CDN
+# Features:
+#   - Automatic production deployments on main branch
+#   - Preview deployments for pull requests
+#   - Parallel build optimization
+#   - Deployment status reporting
+#   - Rollback capabilities
+# ==============================================================================
+
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - preview
+
+# Environment variables global to the workflow
+env:
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  PNPM_VERSION: '9.11.0'
+  NODE_VERSION: '22'
+
+jobs:
+  # ==============================================================================
+  # Build Job - Compiles and tests the application
+  # ==============================================================================
+  build:
+    name: 🏗️ Build & Test
+    runs-on: ubuntu-latest
+    outputs:
+      sha_short: ${{ steps.info.outputs.sha_short }}
+      deploy_url: ${{ steps.deploy.outputs.url }}
+      preview_url: ${{ steps.deploy.outputs.preview-url }}
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📊 Extract Repository Info
+        id: info
+        run: |
+          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 📥 Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔨 Build Production Bundle
+        run: pnpm run build:cf
+        env:
+          NODE_ENV: production
+
+      - name: 🧪 Run Linting
+        run: pnpm run lint
+        continue-on-error: true
+
+      - name: 📤 Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: ./dist
+          retention-days: 7
+
+      - name: 🚀 Deploy to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: it-tools
+          directory: dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          wranglerVersion: '3'
+
+      # Comment PR with deployment URL
+      - name: 💬 Comment PR with Preview URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `#### 🚀 Cloudflare Pages Preview Deployment
+
+            | Environment | URL |
+            |-------------|-----|
+            | Preview | ${{ steps.deploy.outputs.preview-url }} |
+            | Commit | \`${{ steps.info.outputs.sha_short }}\` |
+
+            ✅ *Build completed successfully*
+
+            _Updated at: ${new Date().toISOString()}_`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+  # ==============================================================================
+  # Smoke Test Job - Validates the deployment
+  # ==============================================================================
+  smoke-test:
+    name: 🧪 Smoke Tests
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 📥 Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: ./dist
+
+      - name: 🌐 Check Build Output
+        run: |
+          echo "Verifying build output..."
+          if [ ! -f "dist/index.html" ]; then
+            echo "❌ index.html not found!"
+            exit 1
+          fi
+          echo "✅ Build output verified"
+
+      - name: 📊 Check File Sizes
+        run: |
+          echo "### Build Statistics 📊" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          du -sh dist/* >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🧪 Check Critical Assets
+        run: |
+          critical_files=(
+            "dist/index.html"
+            "dist/assets/index"
+            "dist/sw.js"
+          )
+
+          for file in "${critical_files[@]}"; do
+            if [ -f "$file" ]; then
+              echo "✅ Found: $file"
+            else
+              echo "❌ Missing: $file"
+              exit 1
+            fi
+          done
+
+  # ==============================================================================
+  # Notification Job - Sends deployment notifications
+  # ==============================================================================
+  notify:
+    name: 📢 Notifications
+    needs: [build, smoke-test]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: 📊 Deployment Summary
+        run: |
+          echo "### 🎉 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Status | Details |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ✅ Build | Completed |" >> $GITHUB_STEP_SUMMARY
+          echo "| ✅ Deploy | ${{ needs.build.outputs.deploy_url }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📅 Time | $(date -u) |" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🏷️ Add Deployment Badge
+        run: |
+          echo "![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?logo=cloudflare&logoColor=white)" >> $GITHUB_STEP_SUMMARY

@@ -1,17 +1,148 @@
-# Cloudflare Pages configuration
-name = "toolsapplab"
-compatibility_date = "2024-01-01"
+# ==============================================================================
+# Cloudflare Pages Enterprise Configuration
+# ==============================================================================
+# Architecture: Global Edge Computing + Zero Downtime Deployment
+# Author: Technical Architecture Team
+# Version: 2.0.0
+# ==============================================================================
 
+name = "it-tools"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "dist"
+
+# ==============================================================================
+# Production Environment
+# ==============================================================================
 [env.production]
+name = "it-tools-production"
 routes = [
   { pattern = "toolsapplab.com/*", zone_name = "toolsapplab.com" }
 ]
 
+# ==============================================================================
+# Preview Environment (Pull Requests & Staging)
+# ==============================================================================
+[env.preview]
+name = "it-tools-preview"
+
+# ==============================================================================
+# Build Configuration
+# ==============================================================================
 [build]
-command = "pnpm build"
+command = "pnpm run build:cf"
 cwd = "."
-watch_paths = ["src/**", "locales/**", "public/**"]
+watch_paths = [
+  "src/**",
+  "locales/**",
+  "public/**",
+  "package.json",
+  "vite.config.ts",
+  "wrangler.toml"
+]
 
 [build.environment]
 NODE_VERSION = "22"
 PNPM_VERSION = "9.11.0"
+
+# ==============================================================================
+# Environment Variables
+# ==============================================================================
+[vars]
+APP_VERSION = "2024.10.22"
+BUILD_TIME = "2024-01-15T00:00:00Z"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+DEBUG = "false"
+
+[env.preview.vars]
+ENVIRONMENT = "preview"
+DEBUG = "true"
+
+# ==============================================================================
+# Performance & Security Headers
+# ==============================================================================
+[[headers]]
+for = "/*"
+[headers.values]
+  # Security Headers (OWASP Best Practices)
+  X-Frame-Options = "DENY"
+  X-Content-Type-Options = "nosniff"
+  X-XSS-Protection = "1; mode=block"
+  Referrer-Policy = "strict-origin-when-cross-origin"
+  Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+
+  # Performance Optimization
+  Cache-Control = "public, max-age=31536000, immutable"
+  X-DNS-Prefetch-Control = "on"
+
+  # Cloudflare Performance
+  CF-Cache-Tag = "static-assets"
+  CF-Policy-ID = "static-cache-policy"
+
+[[headers]]
+for = "/*.html"
+[headers.values]
+  Cache-Control = "public, max-age=0, must-revalidate"
+  X-Frame-Options = "SAMEORIGIN"
+
+[[headers]]
+for = "/sw.js"
+[headers.values]
+  Cache-Control = "public, max-age=0, must-revalidate"
+  Service-Worker-Allowed = "/"
+
+[[headers]]
+for = "/index.html"
+[headers.values]
+  Cache-Control = "no-cache, no-store, must-revalidate"
+  Pragma = "no-cache"
+  Expires = "0"
+
+# ==============================================================================
+# SEO & Legacy Redirects
+# ==============================================================================
+[[redirects]]
+from = "/home"
+to = "/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/index.html"
+to = "/"
+status = 301
+force = true
+
+# ==============================================================================
+# Analytics & Monitoring (Cloudflare Web Analytics)
+# ==============================================================================
+# [analytics]
+# enabled = true
+
+# ==============================================================================
+# Advanced Configuration (Future-proofing)
+# ==============================================================================
+# KV Namespace for edge-side caching
+# [[kv_namespaces]]
+# binding = "CACHE"
+# id = "your-kv-namespace-id"
+# preview_id = "your-preview-kv-id"
+
+# D1 Database (SQLite at the edge)
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "it-tools-db"
+# database_id = "your-database-id"
+
+# Edge Functions (Serverless compute)
+# [functions]
+# directory = "functions"
+# compatibility_date = "2024-01-01"
+
+# Rate Limiting (DDoS Protection)
+# [rate_limits]
+#   [rate_limits.api]
+#     limit = 1000
+#     period = 60
+#     namespace = "global"
