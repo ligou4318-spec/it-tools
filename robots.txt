@@ -1,0 +1,25 @@
+# Allow all crawlers including AI bots
+User-agent: *
+Disallow:
+
+# Allow major AI crawlers for content indexing
+User-agent: ChatGPT-User
+Disallow:
+User-agent: GPTBot
+Disallow:
+User-agent: Google-Extended
+Disallow:
+User-agent: anthropic-ai
+Disallow:
+User-agent: Claude-Web
+Disallow:
+User-agent: CCBot
+Disallow:
+User-agent: PerplexityBot
+Disallow:
+
+# Sitemap
+Sitemap: https://toolsapplab.com/sitemap.xml
+
+# Crawl-delay (optional, respectful to servers)
+Crawl-delay: 1
