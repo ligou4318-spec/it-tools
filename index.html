@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Tools</title>
+    <title>IT Tools - ToolsApp Lab</title>
     <link rel="stylesheet" href="/assets/css/index-ad9b37ed.css">
 </head>
 <body>
@@ -11,6 +11,16 @@
 
     <script type="module" src="/assets/js/index-20e68ebe.js"></script>
 
-    <script>console.log("物理环境确认：翻译已关，脚本已发");</script>
+    <script>
+        window.addEventListener('load', () => {
+            console.log("浏览器完全就绪，正在检查挂载点...");
+            const app = document.getElementById('app');
+            if (!app) {
+                console.error("致命错误：HTML 结构中缺失 id='app' 的容器！");
+            } else {
+                console.log("挂载点已锁定，Vue 应该已经亮起。");
+            }
+        });
+    </script>
 </body>
 </html>
